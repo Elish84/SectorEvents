@@ -1,6 +1,6 @@
 import { db } from './auth.js';
 
-const { collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch } = window.firebaseModules;
+const { collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch, updateDoc } = window.firebaseModules;
 
 /**
  * Checks if the current UID is in the admins collection.
@@ -143,6 +143,16 @@ export async function addDocument(colName, data) {
         return docRef.id;
     } catch (e) {
         console.error(`Error adding to ${colName}:`, e);
+        throw e;
+    }
+}
+
+export async function updateDocument(colName, id, data) {
+    try {
+        await updateDoc(doc(db, colName, id), data);
+        return true;
+    } catch (e) {
+        console.error(`Error updating ${id} in ${colName}:`, e);
         throw e;
     }
 }

@@ -40,10 +40,9 @@
         </div>
     </div>
 
-    <!-- Main Content (Hidden until logged in) -->
+    <!-- Main Content -->
     <div id="app-container" class="hidden">
         
-        <!-- Header -->
         <header>
             <div class="logo">
                 <i class="fas fa-satellite-dish"></i> מערכת ניהול אירועים
@@ -54,7 +53,6 @@
             </div>
         </header>
 
-        <!-- Navigation -->
         <nav class="bottom-nav">
             <button class="nav-btn active" data-tab="form-tab"><i class="fas fa-pen"></i><span>דיווח</span></button>
             <button class="nav-btn" data-tab="map-tab"><i class="fas fa-map-marked-alt"></i><span>מפה</span></button>
@@ -63,13 +61,12 @@
             <button class="nav-btn hidden" data-tab="admin-tab" id="nav-admin"><i class="fas fa-cog"></i><span>ניהול</span></button>
         </nav>
 
-        <!-- Main Workspace -->
         <main>
             <!-- Tab 1: Event Form -->
             <section id="form-tab" class="tab-content active">
                 <h2>דיווח אירוע חדש</h2>
                 <form id="event-form" class="tactical-card">
-                    <div class="form-group row">
+                    <div class="form-group row responsive-row">
                         <div class="half">
                             <label>זמן אירוע</label>
                             <input type="datetime-local" id="event-time" required>
@@ -80,7 +77,7 @@
                         </div>
                     </div>
 
-                    <div class="form-group row">
+                    <div class="form-group row responsive-row">
                         <div class="half">
                             <label>תפקיד</label>
                             <select id="role-select" required><option value="">טוען...</option></select>
@@ -96,7 +93,6 @@
                         <select id="event-type-select" required><option value="">טוען...</option></select>
                     </div>
 
-                    <!-- Location Picker -->
                     <div class="form-group location-group">
                         <label>מיקום (נ.צ)</label>
                         <div class="location-controls">
@@ -108,7 +104,6 @@
                         <input type="hidden" id="location-lng">
                     </div>
 
-                    <!-- Detailed Toggles -->
                     <div class="toggle-group">
                         <label class="toggle">
                             <input type="checkbox" id="has-casualties">
@@ -143,9 +138,14 @@
                 <div class="map-controls">
                     <button class="btn small-btn" id="toggle-heatmap"><i class="fas fa-fire"></i> מפת חום</button>
                     <button class="btn small-btn" id="filter-map"><i class="fas fa-filter"></i> סינון</button>
+                    <button class="btn small-btn" id="center-gps"><i class="fas fa-location-arrow"></i> מיקוד</button>
                 </div>
                 <!-- Map container -->
                 <div id="main-map" class="map-container"></div>
+                <!-- Action message for pick mode -->
+                <div id="map-pick-mode-msg" class="hidden" style="position:absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000; background: rgba(0,0,0,0.8); color: #fff; padding: 10px 20px; border-radius: 20px;">
+                    לחץ על המפה לבחירת מיקום לאירוע <button id="btn-cancel-fab-pick" style="background:none; border:none; color:#f44336; margin-right:10px; cursor:pointer;"><i class="fas fa-times"></i></button>
+                </div>
                 <!-- Floating Action Button for Map -->
                 <button id="fab-add-event" class="fab"><i class="fas fa-plus"></i></button>
             </section>
@@ -154,10 +154,37 @@
             <div id="map-picker-modal" class="overlay hidden">
                 <div class="modal-box map-modal-box">
                     <h3>בחר מיקום על המפה</h3>
-                    <div id="picker-map" class="map-container small-map"></div>
+                    <div id="picker-map" class="map-container small-map" style="height: 300px;"></div>
                     <div class="modal-actions">
                         <button class="btn secondary-btn" id="btn-cancel-pick">ביטול</button>
                         <button class="btn primary-btn" id="btn-confirm-pick">אשר מיקום</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Filter Modal -->
+            <div id="map-filter-modal" class="overlay hidden">
+                <div class="modal-box">
+                    <h3>סינון מפה</h3>
+                    <div class="form-group">
+                        <label>סוג אירוע</label>
+                        <select id="map-filter-type">
+                            <option value="all">הכל</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>טווח זמנים</label>
+                        <select id="map-filter-time">
+                            <option value="all">הכל (מאז ומתמיד)</option>
+                            <option value="24">24 שעות אחרונות</option>
+                            <option value="72">3 ימים אחרונים</option>
+                            <option value="168">שבוע אחרון</option>
+                            <option value="720">חודש אחרון</option>
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn secondary-btn" id="btn-close-map-filter">סגור</button>
+                        <button class="btn primary-btn" id="btn-apply-map-filter">החל סינון</button>
                     </div>
                 </div>
             </div>
@@ -183,9 +210,30 @@
             <!-- Tab 4: Records -->
             <section id="records-tab" class="tab-content">
                 <h2>רשימת אירועים</h2>
-                <div class="table-controls">
-                    <input type="text" id="search-events" placeholder="חפש אירוע...">
+                
+                <div class="tactical-card filters-card">
+                    <div class="form-group row responsive-row align-bottom">
+                        <div class="third">
+                            <label>גזרה</label>
+                            <select id="record-filter-sector"><option value="all">הכל</option></select>
+                        </div>
+                        <div class="third">
+                            <label>טווח זמנים</label>
+                            <select id="record-filter-time">
+                                <option value="all">הכל</option>
+                                <option value="24">24 שעות אחרונות</option>
+                                <option value="72">3 ימים אחרונים</option>
+                                <option value="168">שבוע אחרון</option>
+                                <option value="720">חודש אחרון</option>
+                            </select>
+                        </div>
+                        <div class="third">
+                            <label>חיפוש חופשי</label>
+                            <input type="text" id="search-events" placeholder="חפש אירוע...">
+                        </div>
+                    </div>
                 </div>
+
                 <div class="table-responsive tactical-card">
                     <table id="events-table">
                         <thead>
@@ -204,13 +252,58 @@
                 </div>
             </section>
 
-            <!-- Tab 5: Admin Panel (Hidden for non-admins) -->
+            <!-- Record Details Modal -->
+            <div id="record-details-modal" class="overlay hidden">
+                <div class="modal-box">
+                    <h3>פרטי אירוע</h3>
+                    <div id="record-details-content" style="line-height: 1.6;"></div>
+                    <div class="modal-actions" style="margin-top:20px;">
+                        <button class="btn secondary-btn full-width" id="btn-close-record-details">סגור</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Record Modal -->
+            <div id="edit-record-modal" class="overlay hidden">
+                <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
+                    <h3>עריכת אירוע</h3>
+                    <form id="edit-event-form">
+                        <input type="hidden" id="edit-event-id">
+                        
+                        <div class="form-group">
+                            <label>סוג אירוע</label>
+                            <select id="edit-event-type-select" required></select>
+                        </div>
+                        
+                        <div class="form-group row responsive-row">
+                            <div class="half">
+                                <label>תפקיד</label>
+                                <select id="edit-role-select" required></select>
+                            </div>
+                            <div class="half">
+                                <label>גזרה</label>
+                                <select id="edit-sector-select" required></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>הערות נוספות</label>
+                            <textarea id="edit-event-notes" rows="3"></textarea>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn secondary-btn" id="btn-cancel-edit">ביטול</button>
+                            <button type="submit" class="btn primary-btn" id="btn-save-edit">שמור שינויים</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tab 5: Admin Panel -->
             <section id="admin-tab" class="tab-content">
                 <h2>ניהול מערכת</h2>
-                <p class="admin-notice">אזור זה מיועד למנהלים בלבד. מכאן ניתן לנהל את רשימות המערכת.</p>
-                
+                <p class="admin-notice">אזור זה מיועד למנהלים בלבד.</p>
                 <div class="admin-grid">
-                    <!-- Event Types -->
                     <div class="tactical-card">
                         <h3><i class="fas fa-tags"></i> סוגי אירועים</h3>
                         <form id="add-event-type-form">
@@ -221,8 +314,6 @@
                         </form>
                         <ul id="admin-event-types-list" class="admin-list"></ul>
                     </div>
-
-                    <!-- Sectors -->
                     <div class="tactical-card">
                         <h3><i class="fas fa-map"></i> גזרות</h3>
                         <form id="add-sector-form">
@@ -231,8 +322,6 @@
                         </form>
                         <ul id="admin-sectors-list" class="admin-list"></ul>
                     </div>
-
-                    <!-- Roles -->
                     <div class="tactical-card">
                         <h3><i class="fas fa-users-cog"></i> תפקידים</h3>
                         <form id="add-role-form">
@@ -250,12 +339,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        // Export to global scope for our modular scripts to use until bundled (to avoid complex build steps, using global window context for Firebase references)
         window.firebaseModules = {
             initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut,
-            getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch
+            getFirestore, collection, addDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc, deleteDoc, writeBatch, updateDoc
         };
     </script>
 
@@ -264,7 +352,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
-    <!-- App Scripts (Deferred to ensure DOM and Firebase modules load) -->
+    <!-- App Scripts -->
     <script type="module" src="js/firebase-config.js"></script>
     <script type="module" src="js/api.js"></script>
     <script type="module" src="js/auth.js"></script>

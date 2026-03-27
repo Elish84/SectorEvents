@@ -3,16 +3,19 @@ let markerClusterGroup;
 let heatmapLayer;
 let allEventsData = [];
 let eventTypesMap = {}; // name -> {icon, color}
+let mapFilters = { type: 'all', time: 'all' };
 
-const ISRAEL_CENTER = [31.7683, 35.2137]; // Approx center
+const ISRAEL_CENTER = [31.5, 34.8]; // Approx center
 
-// Set up Map on init
+// Callbacks
+let onMainMapPickCallback = null;
+
 export function initMaps() {
     map = L.map('main-map').setView(ISRAEL_CENTER, 8);
     
-    // Using OpenStreetMap dark matter alternative if possible, falling back to standard
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+    // ESRI World Imagery for Satellite view
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri'
     }).addTo(map);
 
     markerClusterGroup = L.markerClusterGroup({
@@ -24,9 +27,8 @@ export function initMaps() {
 
     // Picker map
     pickerMap = L.map('picker-map').setView(ISRAEL_CENTER, 8);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(pickerMap);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(pickerMap);
 
-    // Re-render map when tab opens
     window.addEventListener('tabChanged', (e) => {
         if(e.detail.tabId === 'map-tab') {
             setTimeout(() => { map.invalidateSize(); }, 200);
@@ -34,6 +36,35 @@ export function initMaps() {
     });
 
     setupMapPicker();
+
+    // Main map pick listener for FAB
+    map.on('click', (e) => {
+        if(onMainMapPickCallback) {
+            onMainMapPickCallback(e.latlng);
+        }
+    });
+
+    // GPS Center function
+    document.getElementById('center-gps').addEventListener('click', () => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                map.setView([position.coords.latitude, position.coords.longitude], 14);
+            }, (error) => {
+                console.error("GPS Error", error);
+                alert("לא ניתן לקבל מיקום נוכחי");
+            });
+        }
+    });
+}
+
+export function enableMainMapPickMode(callback) {
+    onMainMapPickCallback = callback;
+    document.getElementById('main-map').style.cursor = 'crosshair';
+}
+
+export function disableMainMapPickMode() {
+    onMainMapPickCallback = null;
+    document.getElementById('main-map').style.cursor = '';
 }
 
 function setupMapPicker() {
@@ -71,7 +102,6 @@ function setupMapPicker() {
     });
 }
 
-// Save event types cache to render custom icons
 export function setEventTypesCache(typesList) {
     eventTypesMap = {};
     typesList.forEach(t => {
@@ -79,21 +109,39 @@ export function setEventTypesCache(typesList) {
     });
 }
 
-// Render Events on map
-export function renderEventsOnMap(events) {
-    allEventsData = events; // save for heatmap
+export function setMapFilters(type, hours) {
+    mapFilters = { type, time: hours };
+    applyMapFiltersAndRender();
+}
+
+function passesFilters(ev) {
+    if(mapFilters.type !== 'all' && ev.eventType !== mapFilters.type) return false;
     
+    if(mapFilters.time !== 'all') {
+        const hoursBack = parseInt(mapFilters.time);
+        const cutoff = new Date().getTime() - (hoursBack * 60 * 60 * 1000);
+        if(!ev.eventTime || ev.eventTime < cutoff) return false;
+    }
+    return true;
+}
+
+export function renderEventsOnMap(events, autoBounds = true) {
+    allEventsData = events; 
+    applyMapFiltersAndRender(autoBounds);
+}
+
+function applyMapFiltersAndRender(autoBounds = false) {
     markerClusterGroup.clearLayers();
     if(heatmapLayer) map.removeLayer(heatmapLayer);
 
     const latlngsHeat = [];
+    const filteredEvents = allEventsData.filter(passesFilters);
 
-    events.forEach(ev => {
+    filteredEvents.forEach(ev => {
         if(ev.location && ev.location.lat && ev.location.lng) {
             const latLng = [ev.location.lat, ev.location.lng];
             latlngsHeat.push(latLng);
             
-            // Build custom Icon
             let tColor = '#ffffff';
             let tIcon = 'question';
             if(eventTypesMap[ev.eventType]) {
@@ -101,7 +149,6 @@ export function renderEventsOnMap(events) {
                 tIcon = eventTypesMap[ev.eventType].icon;
             }
 
-            // Create a custom tactical HTML icon with FontAwesome
             const iconHtml = `
                 <div style="background-color: ${tColor}; width: 30px; height: 30px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid #fff; box-shadow: 0 0 5px rgba(0,0,0,0.5);">
                     <i class="fas fa-${tIcon}" style="color: #000; font-size: 14px;"></i>
@@ -133,27 +180,39 @@ export function renderEventsOnMap(events) {
         }
     });
 
-    // Create heatmap but don't add to map immediately unless toggled
+    if(autoBounds && filteredEvents.length > 0) {
+        const bounds = markerClusterGroup.getBounds();
+        if(bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
+
     if (latlngsHeat.length > 0 && typeof L.heatLayer !== 'undefined') {
         heatmapLayer = L.heatLayer(latlngsHeat, {
             radius: 25,
             blur: 15,
             gradient: {0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'}
         });
+        
+        // If heatmap was active, refresh it
+        const btn = document.getElementById('toggle-heatmap');
+        if(btn.classList.contains('primary-btn')) {
+            map.addLayer(heatmapLayer);
+            map.removeLayer(markerClusterGroup);
+        }
     }
 }
 
 export function setupHeatmapToggle() {
     const btn = document.getElementById('toggle-heatmap');
-    let isHeat = false;
 
     btn.addEventListener('click', () => {
-        isHeat = !isHeat;
-        if(isHeat) {
+        const isHeat = btn.classList.contains('primary-btn');
+        if(!isHeat) { // turning it on
             btn.classList.replace('secondary-btn', 'primary-btn');
             map.removeLayer(markerClusterGroup);
             if(heatmapLayer) map.addLayer(heatmapLayer);
-        } else {
+        } else { // turning it off
             btn.classList.replace('primary-btn', 'secondary-btn');
             if(heatmapLayer) map.removeLayer(heatmapLayer);
             map.addLayer(markerClusterGroup);
