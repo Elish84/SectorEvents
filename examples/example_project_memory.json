@@ -1,0 +1,37 @@
+{
+  "project_name": "My App",
+  "project_summary": "A web application under active development with a PM-driven multi-agent workflow.",
+  "current_scope": [
+    "Core app foundations",
+    "Role-driven execution model",
+    "Structured task delegation"
+  ],
+  "key_decisions": [
+    "User talks only to Project Manager",
+    "Summarizer maintains persistent project memory",
+    "All agents use shared task and response schemas"
+  ],
+  "active_components": [
+    "frontend",
+    "backend",
+    "database",
+    "security",
+    "qa"
+  ],
+  "constraints": [
+    "No direct user-to-specialist communication",
+    "Architecture and security review required for cross-cutting changes"
+  ],
+  "open_items": [
+    "Choose authentication provider",
+    "Define release workflow"
+  ],
+  "recent_changes": [
+    "Initialized multi-agent operating package"
+  ],
+  "next_steps": [
+    "Load agents into Antigravity",
+    "Start first scoped delivery request"
+  ],
+  "updated_at": "2026-03-27T17:00:00+03:00"
+}

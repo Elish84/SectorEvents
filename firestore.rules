@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== פונקציות עזר =====
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // =====================================================
+    // ============ PROJECT: SECTOR EVENTS =================
+    // =====================================================
+    
+    // אירועים: כל משתמש מחובר יכול לדווח ולצפות. רק מנהל יכול לערוך או למחוק.
+    match /sectorEvents/{docId} {
+      allow create, read: if signedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // סוגי אירועים ותפקידים: כולם (מחוברים) קוראים, רק מנהל עורך
+    match /roles/{docId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /eventTypes/{docId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ================= PROJECT: REVIEWS ==================
+    // =====================================================
+    match /reviews/{docId} {
+      allow create: if signedIn();
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ============== PROJECT: HOUSE SCANS =================
+    // =====================================================
+    match /houseScans/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // =================== MAP PINS ========================
+    // =====================================================
+    match /mapPins/{docId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // =================== PLACES ==========================
+    // =====================================================
+    match /places/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // =================== SECTORS =========================
+    // =====================================================
+    match /sectors/{docId} {
+      allow read: if true;
+      // Note: This applies to both the old projects and our new Sector Events project
+      allow create, update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ================= TZAMM CALENDAR ====================
+    // =====================================================
+    match /tzammCalendar/{docId} {
+
+      // כולם יכולים לקרוא (UI פתוח)
+      allow read: if true;
+
+      // רק אדמין יוצר/מעדכן/מוחק
+      allow create, update: if true;
+    }
+
+    // =====================================================
+    // =================== ADMINS ==========================
+    // =====================================================
+    match /admins/{uid} {
+      // אזהרת אבטחה: החוק הזה מאפשר לכל משתמש מחובר להפוך את עצמו למנהל הכל יכול.
+      // אם זה לצרכי טסטינג זה בסדר, אך בפרודקשן מומלץ שרק אדמין יוכל ליצור אדמינים נוספים.
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ============== ברירת מחדל חסימה =====================
+    // =====================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

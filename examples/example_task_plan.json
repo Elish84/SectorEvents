@@ -1,0 +1,66 @@
+{
+  "request_id": "REQ-001",
+  "objective": "Add user login and role-based admin dashboard",
+  "assumptions": [
+    "Web application already exists",
+    "Authentication provider is not yet fixed"
+  ],
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "request_id": "REQ-001",
+      "title": "Design auth and permission model",
+      "owner": "security",
+      "objective": "Define secure login flow and role model",
+      "inputs": [
+        "Need user login",
+        "Need admin dashboard"
+      ],
+      "constraints": [
+        "Must support least privilege"
+      ],
+      "dependencies": [],
+      "expected_output": [
+        "auth model",
+        "role model",
+        "security controls"
+      ],
+      "priority": "P0",
+      "status": "todo"
+    },
+    {
+      "task_id": "TASK-002",
+      "request_id": "REQ-001",
+      "title": "Define architecture impact",
+      "owner": "architect",
+      "objective": "Assess where auth and roles live in system design",
+      "inputs": [
+        "User login",
+        "Admin dashboard"
+      ],
+      "constraints": [],
+      "dependencies": [
+        "TASK-001"
+      ],
+      "expected_output": [
+        "design recommendation",
+        "impact areas"
+      ],
+      "priority": "P1",
+      "status": "todo"
+    }
+  ],
+  "dependencies": [
+    "Security before implementation details"
+  ],
+  "risks": [
+    "Role leakage",
+    "Poor session handling"
+  ],
+  "approval_needed_from": [
+    "security",
+    "architect",
+    "qa"
+  ],
+  "completion_definition": "Login flow, roles, UI gating, and validation plan are all defined"
+}
