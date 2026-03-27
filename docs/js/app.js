@@ -1,5 +1,5 @@
-import { initAuth, checkIfAdmin, seedInitialData } from './auth.js';
-import { subscribeToCollection, subscribeToEvents, createEvent, deleteDocument } from './api.js';
+import { initAuth } from './auth.js';
+import { checkIfAdmin, seedInitialData, subscribeToCollection, subscribeToEvents, createEvent, deleteDocument } from './api.js';
 import { renderDropdown, setupTabs, showNotification, formatTimestamp } from './ui.js';
 import { initMaps, renderEventsOnMap, setupHeatmapToggle, setEventTypesCache } from './map.js';
 import { updateDashboard, setDashboardEventTypesCache } from './dashboard.js';
