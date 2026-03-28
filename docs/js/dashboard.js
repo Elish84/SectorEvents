@@ -57,6 +57,7 @@ function renderChart(eventsData) {
 
     Chart.defaults.color = '#ffffff';
     Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+    Chart.register(ChartDataLabels);
 
     chartInstance = new Chart(ctx, {
         type: 'bar',
@@ -72,7 +73,14 @@ function renderChart(eventsData) {
                 y: { stacked: true, beginAtZero: true, grid: { color: '#333' } }
             },
             plugins: {
-                legend: { position: 'bottom' }
+                legend: { position: 'bottom' },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 14 },
+                    formatter: function(value, context) {
+                        return value > 0 ? value : '';
+                    }
+                }
             }
         }
     });

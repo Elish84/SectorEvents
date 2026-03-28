@@ -210,9 +210,10 @@ function applyMapFiltersAndRender(autoBounds = false) {
 
     if (latlngsHeat.length > 0 && typeof L.heatLayer !== 'undefined') {
         heatmapLayer = L.heatLayer(latlngsHeat, {
-            radius: 25,
-            blur: 15,
-            gradient: {0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'}
+            radius: 40,
+            blur: 25,
+            maxZoom: 10,
+            gradient: {0.3: 'blue', 0.5: 'lime', 0.7: 'yellow', 1.0: 'red'}
         });
         
         // If heatmap was active, refresh it

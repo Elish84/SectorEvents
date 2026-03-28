@@ -282,10 +282,20 @@ function setupRecordsInteractions() {
     document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-event-id').value;
+        const casualtiesText = document.getElementById('edit-casualties').value;
+        const damageText = document.getElementById('edit-damage').value;
+        const timestamp = new Date(document.getElementById('edit-event-time').value).getTime();
+
         const data = {
+            eventTime: timestamp,
+            reporterName: document.getElementById('edit-reporter-name').value,
             eventType: document.getElementById('edit-event-type-select').value,
             role: document.getElementById('edit-role-select').value,
             sector: document.getElementById('edit-sector-select').value,
+            hasCasualties: casualtiesText.trim() !== '',
+            casualtiesDetails: casualtiesText,
+            hasDamage: damageText.trim() !== '',
+            damageDetails: damageText,
             notes: document.getElementById('edit-event-notes').value
         };
 
@@ -412,9 +422,20 @@ function showEventDetails(ev) {
 
 function openEditModal(ev) {
     document.getElementById('edit-event-id').value = ev.id;
+    
+    // Convert timestamp to datetime-local format
+    if (ev.eventTime) {
+        const dt = new Date(ev.eventTime);
+        dt.setMinutes(dt.getMinutes() - dt.getTimezoneOffset());
+        document.getElementById('edit-event-time').value = dt.toISOString().slice(0, 16);
+    }
+    
+    document.getElementById('edit-reporter-name').value = ev.reporterName || '';
     document.getElementById('edit-event-type-select').value = ev.eventType;
     document.getElementById('edit-role-select').value = ev.role;
     document.getElementById('edit-sector-select').value = ev.sector;
+    document.getElementById('edit-casualties').value = ev.casualtiesDetails || '';
+    document.getElementById('edit-damage').value = ev.damageDetails || '';
     document.getElementById('edit-event-notes').value = ev.notes || '';
     
     document.getElementById('edit-record-modal').classList.remove('hidden');
