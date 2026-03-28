@@ -120,7 +120,14 @@ function bindPrivateSubscriptions() {
         renderEventsTable();
     }, (newEvent) => {
         import('./ui.js').then(({ showNotification }) => {
-            showNotification(`אירוע חדש בגזרה: ${newEvent.eventType}`, 'success');
+            showNotification(`אירוע חדש בגזרה: ${newEvent.eventType}`, 'error', {
+                text: 'מרכז',
+                onClick: () => {
+                    import('./map.js').then(({ centerMapOnEvent }) => {
+                        centerMapOnEvent(newEvent);
+                    });
+                }
+            });
         });
     });
 }

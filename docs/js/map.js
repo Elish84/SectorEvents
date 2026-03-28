@@ -247,3 +247,24 @@ export function setupHeatmapToggle() {
         }
     });
 }
+
+export function centerMapOnEvent(ev) {
+    if(!ev || !ev.location || !ev.location.lat || !ev.location.lng) return;
+    
+    // Switch to map tab if not active
+    const mapTabBtn = document.querySelector('[data-tab="map-tab"]');
+    if (mapTabBtn) mapTabBtn.click();
+    
+    map.flyTo([ev.location.lat, ev.location.lng], 16, { duration: 1.5 });
+    
+    setTimeout(() => {
+        if (!markerClusterGroup) return;
+        const layers = markerClusterGroup.getLayers();
+        const marker = layers.find(m => m.options.eventId === ev.id);
+        if(marker) {
+            markerClusterGroup.zoomToShowLayer(marker, () => {
+                marker.openPopup();
+            });
+        }
+    }, 1500);
+}

@@ -67,7 +67,25 @@ export function setupTabs(isAdmin) {
     });
 }
 
-export function showNotification(msg, type='success') {
+export function showNotification(msg, type='success', actionObj=null) {
+    
+    // Play a small beep sound for notifications
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(type === 'success' ? 880 : 440, ctx.currentTime);
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.15);
+        }
+    } catch(e) {}
+
     // A simple tactical toast message
     const div = document.createElement('div');
     div.style.position = 'fixed';
@@ -81,13 +99,43 @@ export function showNotification(msg, type='success') {
     div.style.zIndex = '100000';
     div.style.fontWeight = 'bold';
     div.style.boxShadow = '0 4px 6px rgba(0,0,0,0.3)';
-    div.innerText = msg;
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'space-between';
+    div.style.gap = '15px';
+    
+    const textSpan = document.createElement('span');
+    textSpan.innerText = msg;
+    div.appendChild(textSpan);
+
+    let isDismissed = false;
+    
+    if (actionObj) {
+        const btn = document.createElement('button');
+        btn.innerText = actionObj.text;
+        btn.style.backgroundColor = 'white';
+        btn.style.color = type === 'success' ? '#4CAF50' : '#f44336';
+        btn.style.border = 'none';
+        btn.style.padding = '5px 10px';
+        btn.style.borderRadius = '10px';
+        btn.style.cursor = 'pointer';
+        btn.style.fontWeight = 'bold';
+        btn.onclick = () => {
+            isDismissed = true;
+            div.remove();
+            actionObj.onClick();
+        };
+        div.appendChild(btn);
+    }
 
     document.body.appendChild(div);
 
+    const timeout = actionObj ? 7000 : 3000;
+
     setTimeout(() => {
+        if (isDismissed) return;
         div.style.transition = 'opacity 0.5s';
         div.style.opacity = '0';
-        setTimeout(() => div.remove(), 500);
-    }, 3000);
+        setTimeout(() => { if(!isDismissed) div.remove(); }, 500);
+    }, timeout);
 }
