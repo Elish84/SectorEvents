@@ -249,13 +249,13 @@ function setupEventForm() {
                 hour: '2-digit', minute: '2-digit'
             }) : 'לא צוין';
             
-            const waText = `🚨 אירוע גזרתי - ${data.eventType}
+            const waText = `*🚨 אירוע גזרתי - ${data.eventType}*
 📍 גזרה: ${data.sector}
 🕒 זמן: ${evTimeStr}
-📋 כוח / משימה: ${data.missionName || '-'}
+כוח / משימה: ${data.missionName || '-'}
 👤 דיווח ע"י: ${data.reporterName} (${data.role})
-📌 נפגעים: ${data.hasCasualties ? data.casualtiesDetails : 'אין'}
-📌 נזק: ${data.hasDamage ? data.damageDetails : 'אין'}
+נפגעים: ${data.hasCasualties ? data.casualtiesDetails : 'אין'}
+נזק: ${data.hasDamage ? data.damageDetails : 'אין'}
 📝 הערות: ${data.notes || '-'}`;
 
             document.getElementById('event-form').reset();
