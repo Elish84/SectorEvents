@@ -12,6 +12,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
+    function isManager() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/manager/$(request.auth.uid));
+    }
+
     // =====================================================
     // ============ PROJECT: SECTOR EVENTS =================
     // =====================================================
@@ -26,12 +31,12 @@ service cloud.firestore {
     // סוגי אירועים ותפקידים: כולם כותבים ציבורית קוראים כדי למלא טפסים, רק מנהל עורך
     match /roles/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isManager();
     }
 
     match /eventTypes/{docId} {
       allow read: if true;
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isManager();
     }
 
     // =====================================================
@@ -74,7 +79,7 @@ service cloud.firestore {
     match /sectors/{docId} {
       allow read: if true;
       // Note: This applies to both the old projects and our new Sector Events project
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if isManager();
     }
 
     // =====================================================
@@ -98,6 +103,15 @@ service cloud.firestore {
       allow create: if signedIn() && request.auth.uid == uid;
       allow read: if signedIn() && request.auth.uid == uid;
       allow update, delete: if isAdmin();
+    }
+
+    // =====================================================
+    // ================== MANAGER =========================
+    // =====================================================
+    match /manager/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow update, delete: if isManager();
     }
 
     // =====================================================

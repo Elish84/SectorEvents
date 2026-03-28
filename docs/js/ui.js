@@ -37,12 +37,12 @@ export function formatTimestamp(timestampObj) {
     });
 }
 
-export function setupTabs(isAdmin) {
+export function setupTabs(isManager) {
     const navBtns = document.querySelectorAll('.nav-btn');
     const tabs = document.querySelectorAll('.tab-content');
     
     const navAdmin = document.getElementById('nav-admin');
-    if(isAdmin) {
+    if(isManager) {
         navAdmin.classList.remove('hidden');
     } else {
         navAdmin.classList.add('hidden');

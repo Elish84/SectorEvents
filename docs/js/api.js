@@ -15,6 +15,15 @@ export async function checkIfAdmin(uid) {
     }
 }
 
+export async function checkIfManager(uid) {
+    try {
+        const managerDoc = await getDoc(doc(db, 'manager', uid));
+        return managerDoc.exists();
+    } catch (e) {
+        return false;
+    }
+}
+
 /**
  * Creates seed data for testing purposes if collections are empty.
  */

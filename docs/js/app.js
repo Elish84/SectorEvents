@@ -1,11 +1,12 @@
 import { initAuth } from './auth.js';
-import { checkIfAdmin, seedInitialData, subscribeToCollection, subscribeToEvents, createEvent, deleteDocument, updateDocument } from './api.js';
+import { checkIfAdmin, checkIfManager, seedInitialData, subscribeToCollection, subscribeToEvents, createEvent, deleteDocument, updateDocument } from './api.js';
 import { renderDropdown, setupTabs, showNotification, formatTimestamp } from './ui.js';
 import { initMaps, renderEventsOnMap, setupHeatmapToggle, setEventTypesCache, enableMainMapPickMode, disableMainMapPickMode, setMapFilters } from './map.js';
 import { updateDashboard, setDashboardEventTypesCache } from './dashboard.js';
 import { setupAdminForms, renderAdminList } from './admin.js';
 
 let isAdminUser = false;
+let isManagerUser = false;
 let typesCache = [];
 let allEventsCache = [];
 let sectorsCache = [];
@@ -24,9 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Auth pipeline starts App for authenticated users
     initAuth(async (user) => {
         isAdminUser = await checkIfAdmin(user.uid);
-        import('./ui.js').then(({setupTabs}) => setupTabs(isAdminUser));
+        isManagerUser = await checkIfManager(user.uid);
+        import('./ui.js').then(({setupTabs}) => setupTabs(isManagerUser));
         
-        if (isAdminUser) {
+        if (isManagerUser) {
            await seedInitialData();
            import('./admin.js').then(({setupAdminForms, renderAdminList}) => {
                setupAdminForms();
@@ -107,7 +109,7 @@ function bindPublicSubscriptions() {
             }
         });
 
-        if (isAdminUser) renderAdminList('admin-event-types-list', items, 'eventTypes');
+        if (isManagerUser) renderAdminList('admin-event-types-list', items, 'eventTypes');
     });
 }
 
@@ -240,11 +242,49 @@ function setupEventForm() {
         try {
             document.getElementById('btn-submit-event').disabled = true;
             await createEvent(data);
-            showNotification('אירוע דווח בהצלחה!');
+            
+            // Generate WhatsApp formatted text
+            const evTimeStr = data.eventTime ? new Date(data.eventTime).toLocaleString('he-IL', {
+                year: 'numeric', month: '2-digit', day: '2-digit', 
+                hour: '2-digit', minute: '2-digit'
+            }) : 'לא צוין';
+            
+            const waText = `🚨 אירוע גזרתי - ${data.eventType}
+📍 גזרה: ${data.sector}
+🕒 זמן: ${evTimeStr}
+📋 כוח / משימה: ${data.missionName || '-'}
+👤 דיווח ע"י: ${data.reporterName} (${data.role})
+📌 נפגעים: ${data.hasCasualties ? data.casualtiesDetails : 'אין'}
+📌 נזק: ${data.hasDamage ? data.damageDetails : 'אין'}
+📝 הערות: ${data.notes || '-'}`;
+
             document.getElementById('event-form').reset();
             timeInput.value = now.toISOString().slice(0, 16);
+            document.getElementById('location-display').value = '';
+            document.getElementById('location-lat').value = '';
+            document.getElementById('location-lng').value = '';
+            
+            // Show WA Modal
+            const waModal = document.getElementById('wa-modal');
+            const btnyes = document.getElementById('btn-wa-yes');
+            const btnno = document.getElementById('btn-wa-no');
+            if (waModal && btnyes && btnno) {
+                waModal.classList.remove('hidden');
+                btnyes.onclick = () => {
+                    waModal.classList.add('hidden');
+                    import('./ui.js').then(({ showNotification }) => showNotification('אירוע דווח בהצלחה!'));
+                    window.open(`https://wa.me/?text=${encodeURIComponent(waText)}`, '_blank');
+                };
+                btnno.onclick = () => {
+                    waModal.classList.add('hidden');
+                    import('./ui.js').then(({ showNotification }) => showNotification('אירוע דווח בהצלחה!'));
+                };
+            } else {
+                import('./ui.js').then(({ showNotification }) => showNotification('אירוע דווח בהצלחה!'));
+            }
+
         } catch(error) {
-            showNotification('שגיאה בשליחת דיווח', 'error');
+            import('./ui.js').then(({ showNotification }) => showNotification('שגיאה בשליחת דיווח', 'error'));
         } finally {
             document.getElementById('btn-submit-event').disabled = false;
         }
@@ -306,12 +346,43 @@ function setupRecordsInteractions() {
         document.getElementById('edit-record-modal').classList.add('hidden');
     });
 
+    document.getElementById('btn-edit-map-pick').addEventListener('click', () => {
+        const id = document.getElementById('edit-event-id').value;
+        if (!id) return;
+        
+        document.getElementById('edit-record-modal').classList.add('hidden');
+        
+        // Return to map tab visually
+        const mapTabBtn = document.querySelector('[data-tab="map-tab"]');
+        if (mapTabBtn) mapTabBtn.click();
+        
+        import('./map.js').then(({ enableMainMapPickMode }) => {
+            enableMainMapPickMode((latlng) => {
+                // Update local cache for this event since form doesn't display coords
+                const ev = allEventsCache.find(e => e.id === id);
+                if (ev) {
+                    ev.location = { lat: latlng.lat, lng: latlng.lng };
+                }
+                
+                // Show modal back
+                document.getElementById('edit-record-modal').classList.remove('hidden');
+                
+                // Return to records tab visually
+                const recordsTabBtn = document.querySelector('[data-tab="records-tab"]');
+                if (recordsTabBtn) recordsTabBtn.click();
+            });
+        });
+    });
+
     document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-event-id').value;
         const casualtiesText = document.getElementById('edit-casualties').value;
         const damageText = document.getElementById('edit-damage').value;
         const timestamp = new Date(document.getElementById('edit-event-time').value).getTime();
+
+        // Read location potentially modified by map pick
+        const ev = allEventsCache.find(ev => ev.id === id);
 
         const data = {
             eventTime: timestamp,
@@ -326,6 +397,10 @@ function setupRecordsInteractions() {
             damageDetails: damageText,
             notes: document.getElementById('edit-event-notes').value
         };
+
+        if (ev && ev.location) {
+            data.location = ev.location;
+        }
 
         try {
             await updateDocument('sectorEvents', id, data);
