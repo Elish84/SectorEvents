@@ -249,14 +249,14 @@ function setupEventForm() {
                 hour: '2-digit', minute: '2-digit'
             }) : 'לא צוין';
             
-            const waText = `*🚨 אירוע גזרתי - ${data.eventType}*
-📍 גזרה: ${data.sector}
-🕒 זמן: ${evTimeStr}
+            const waText = `*\uD83D\uDEA8 אירוע גזרתי - ${data.eventType}*
+\uD83D\uDCCD גזרה: ${data.sector}
+\uD83D\uDD52 זמן: ${evTimeStr}
 כוח / משימה: ${data.missionName || '-'}
-👤 דיווח ע"י: ${data.reporterName} (${data.role})
+\uD83D\uDC64 דיווח ע"י: ${data.reporterName} (${data.role})
 נפגעים: ${data.hasCasualties ? data.casualtiesDetails : 'אין'}
 נזק: ${data.hasDamage ? data.damageDetails : 'אין'}
-📝 הערות: ${data.notes || '-'}`;
+\uD83D\uDCDD הערות: ${data.notes || '-'}`;
 
             document.getElementById('event-form').reset();
             timeInput.value = now.toISOString().slice(0, 16);
