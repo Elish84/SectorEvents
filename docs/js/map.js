@@ -107,6 +107,9 @@ export function setEventTypesCache(typesList) {
     typesList.forEach(t => {
         eventTypesMap[t.name] = t;
     });
+    if (allEventsData.length > 0) {
+        renderEventsOnMap(allEventsData, false);
+    }
 }
 
 export function setMapFilters(type, hours) {
@@ -167,8 +170,10 @@ function applyMapFiltersAndRender(autoBounds = false) {
                     <h3 style="color: ${tColor}; margin-bottom: 5px; border-bottom: 1px solid #444; padding-bottom: 5px;">
                         <i class="fas fa-${tIcon}"></i> ${ev.eventType}
                     </h3>
+                    <p><strong>זמן אירוע:</strong> ${ev.eventTime ? new Date(ev.eventTime).toLocaleString('he-IL', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit'}) : 'לא ידוע'}</p>
                     <p><strong>גזרה:</strong> ${ev.sector}</p>
                     <p><strong>מדווח:</strong> ${ev.reporterName} (${ev.role})</p>
+                    <p><strong>כוח / משימה:</strong> ${ev.missionName || '-'}</p>
                     <p><strong>הערות:</strong> ${ev.notes || '-'}</p>
                     ${ev.hasCasualties ? `<p style="color: #f44336;"><strong>נפגעים:</strong> ${ev.casualtiesDetails}</p>` : ''}
                     ${ev.hasDamage ?  `<p style="color: #ff9800;"><strong>נזק:</strong> ${ev.damageDetails}</p>` : ''}
@@ -210,10 +215,11 @@ function applyMapFiltersAndRender(autoBounds = false) {
 
     if (latlngsHeat.length > 0 && typeof L.heatLayer !== 'undefined') {
         heatmapLayer = L.heatLayer(latlngsHeat, {
-            radius: 40,
-            blur: 25,
-            maxZoom: 10,
-            gradient: {0.3: 'blue', 0.5: 'lime', 0.7: 'yellow', 1.0: 'red'}
+            radius: 25,
+            blur: 15,
+            maxZoom: 14,
+            max: 1.0, 
+            gradient: {0.4: 'blue', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red'}
         });
         
         // If heatmap was active, refresh it

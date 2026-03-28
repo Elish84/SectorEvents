@@ -13,15 +13,30 @@ export let currentUser = null;
 
 // DOM Elements
 const authContainer = document.getElementById('auth-container');
-const appContainer = document.getElementById('app-container');
 const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const logoutBtn = document.getElementById('logout-btn');
+const loginOpenBtn = document.getElementById('login-open-btn');
+const closeAuthBtn = document.getElementById('btn-close-auth');
 const userGreeting = document.getElementById('user-greeting');
-const navAdmin = document.getElementById('nav-admin');
+
+// Elements to show/hide based on auth
+const authOnlyElements = document.querySelectorAll('.auth-only');
+const publicOnlyElements = document.querySelectorAll('.public-only');
 
 // Events
 export function initAuth(onLoginCallback) {
+    if (loginOpenBtn) {
+        loginOpenBtn.addEventListener('click', () => {
+            authContainer.classList.remove('hidden');
+        });
+    }
+    
+    if (closeAuthBtn) {
+        closeAuthBtn.addEventListener('click', () => {
+            authContainer.classList.add('hidden');
+        });
+    }
     // Handle Form Submit
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -59,17 +74,26 @@ export function initAuth(onLoginCallback) {
             // Logged in
             currentUser = user;
             authContainer.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            userGreeting.innerText = `שלום, ${user.email.split('@')[0]}`;
+            
+            authOnlyElements.forEach(el => el.classList.remove('hidden'));
+            publicOnlyElements.forEach(el => el.classList.add('hidden'));
+            
+            if(userGreeting) {
+                userGreeting.innerText = `שלום, ${user.email.split('@')[0]}`;
+            }
             
             // Trigger app initialization load
             if (onLoginCallback) onLoginCallback(user);
         } else {
             // Logged out
             currentUser = null;
-            authContainer.classList.remove('hidden');
-            appContainer.classList.add('hidden');
-            navAdmin.classList.add('hidden'); // hide admin tab
+            
+            authOnlyElements.forEach(el => el.classList.add('hidden'));
+            publicOnlyElements.forEach(el => el.classList.remove('hidden'));
+            
+            // Switch to form tab
+            const formTabBtn = document.querySelector('[data-tab="form-tab"]');
+            if (formTabBtn) formTabBtn.click();
         }
     });
 }

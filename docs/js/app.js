@@ -12,28 +12,37 @@ let sectorsCache = [];
 let rolesCache = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize public things immediately
+    initMaps();
+    setupHeatmapToggle();
+    setupEventForm();
+    setupMapInteractions();
     
-    // Auth pipeline starts App
+    // Bind public subscriptions (Dropdowns)
+    bindPublicSubscriptions();
+
+    // 2. Auth pipeline starts App for authenticated users
     initAuth(async (user) => {
         isAdminUser = await checkIfAdmin(user.uid);
-        setupTabs(isAdminUser);
+        import('./ui.js').then(({setupTabs}) => setupTabs(isAdminUser));
         
         if (isAdminUser) {
            await seedInitialData();
-           setupAdminForms();
+           import('./admin.js').then(({setupAdminForms, renderAdminList}) => {
+               setupAdminForms();
+               renderAdminList('admin-sectors-list', sectorsCache, 'sectors');
+               renderAdminList('admin-roles-list', rolesCache, 'roles');
+               renderAdminList('admin-event-types-list', typesCache, 'eventTypes');
+           });
         }
 
-        initMaps();
-        setupHeatmapToggle();
-        setupEventForm();
-        setupMapInteractions();
         setupDashboardInteractions();
         setupRecordsInteractions();
-        bindDataSubscriptions();
+        bindPrivateSubscriptions();
     });
 });
 
-function bindDataSubscriptions() {
+function bindPublicSubscriptions() {
     // Sectors
     subscribeToCollection('sectors', (items) => {
         sectorsCache = items;
@@ -100,13 +109,19 @@ function bindDataSubscriptions() {
 
         if (isAdminUser) renderAdminList('admin-event-types-list', items, 'eventTypes');
     });
+}
 
-    // Events
+function bindPrivateSubscriptions() {
+    // Events - with real time notification
     subscribeToEvents((events) => {
         allEventsCache = events;
         renderEventsOnMap(events, true); // initial auto bounds
-        renderDashboardData();
+        updateDashboard(events);
         renderEventsTable();
+    }, (newEvent) => {
+        import('./ui.js').then(({ showNotification }) => {
+            showNotification(`אירוע חדש בגזרה: ${newEvent.eventType}`, 'success');
+        });
     });
 }
 
@@ -197,6 +212,7 @@ function setupEventForm() {
             reporterName: document.getElementById('reporter-name').value,
             role: document.getElementById('role-select').value,
             sector: document.getElementById('sector-select').value,
+            missionName: document.getElementById('mission-name').value,
             eventType: document.getElementById('event-type-select').value,
             location: {
                 lat: parseFloat(document.getElementById('location-lat').value),
@@ -265,11 +281,15 @@ function renderDashboardData() {
     updateDashboard(filteredEvents);
 }
 
+                        let currentFilteredRecords = [];
+
 // --- Records Table & Filters ---
 function setupRecordsInteractions() {
     document.getElementById('search-events').addEventListener('input', renderEventsTable);
     document.getElementById('record-filter-sector').addEventListener('change', renderEventsTable);
     document.getElementById('record-filter-time').addEventListener('change', renderEventsTable);
+    
+    document.getElementById('btn-export-csv').addEventListener('click', exportRecordsToCSV);
 
     document.getElementById('btn-close-record-details').addEventListener('click', () => {
         document.getElementById('record-details-modal').classList.add('hidden');
@@ -289,6 +309,7 @@ function setupRecordsInteractions() {
         const data = {
             eventTime: timestamp,
             reporterName: document.getElementById('edit-reporter-name').value,
+            missionName: document.getElementById('edit-mission-name').value,
             eventType: document.getElementById('edit-event-type-select').value,
             role: document.getElementById('edit-role-select').value,
             sector: document.getElementById('edit-sector-select').value,
@@ -307,6 +328,42 @@ function setupRecordsInteractions() {
             showNotification('שגיאה בעדכון אירוע', 'error');
         }
     });
+}
+
+function exportRecordsToCSV() {
+    if(currentFilteredRecords.length === 0) {
+        import('./ui.js').then(({showNotification}) => showNotification('אין רשומות לייצוא', 'error'));
+        return;
+    }
+    
+    let csvContent = "\uFEFF"; // UTF-8 BOM for Excel
+    csvContent += "זמן במערכת,זמן אירוע,סוג,גזרה,מדווח,תפקיד,כוח / משימה,קו רוחב,קו אורך,הערות,נפגעים,נזק\n";
+
+    currentFilteredRecords.forEach(ev => {
+        const sysTime = import('./ui.js').then(({formatTimestamp}) => formatTimestamp(ev.createdAt));
+        const evTime = ev.eventTime ? new Date(ev.eventTime).toLocaleString('he-IL') : '';
+        const type = ev.eventType || '';
+        const sector = ev.sector || '';
+        const reporter = ev.reporterName || '';
+        const role = ev.role || '';
+        const mission = (ev.missionName || '').replace(/"/g, '""');
+        const lat = ev.location && ev.location.lat ? ev.location.lat : '';
+        const lng = ev.location && ev.location.lng ? ev.location.lng : '';
+        const notes = (ev.notes || '').replace(/"/g, '""');
+        const casualties = ev.hasCasualties ? (ev.casualtiesDetails || 'כן').replace(/"/g, '""') : 'לא';
+        const damage = ev.hasDamage ? (ev.damageDetails || 'כן').replace(/"/g, '""') : 'לא';
+
+        csvContent += `"${new Date(ev.createdAt).toLocaleString('he-IL')}","${evTime}","${type}","${sector}","${reporter}","${role}","${mission}","${lat}","${lng}","${notes}","${casualties}","${damage}"\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `events_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function renderEventsTable() {
@@ -337,6 +394,8 @@ function renderEventsTable() {
                    (ev.notes || '').toLowerCase().includes(searchText);
         });
     }
+
+    currentFilteredRecords = filteredEvents;
 
     filteredEvents.forEach(ev => {
         const tr = document.createElement('tr');
@@ -409,6 +468,7 @@ function showEventDetails(ev) {
         <p><strong>זמן דיווח למערכת:</strong> ${formatTimestamp(ev.createdAt)}</p>
         <p><strong>זמן האירוע בשטח:</strong> ${dateStr}</p>
         <p><strong>מדווח:</strong> ${ev.reporterName} (${ev.role})</p>
+        <p><strong>כוח / משימה:</strong> ${ev.missionName || '-'}</p>
         <p><strong>גזרה:</strong> ${ev.sector}</p>
         <p><strong>סוג אירוע:</strong> ${ev.eventType}</p>
         <p><strong>מיקום (נ.צ):</strong> ${ev.location ? `${ev.location.lat.toFixed(5)}, ${ev.location.lng.toFixed(5)}` : 'אין מיקום'}</p>
@@ -431,6 +491,7 @@ function openEditModal(ev) {
     }
     
     document.getElementById('edit-reporter-name').value = ev.reporterName || '';
+    document.getElementById('edit-mission-name').value = ev.missionName || '';
     document.getElementById('edit-event-type-select').value = ev.eventType;
     document.getElementById('edit-role-select').value = ev.role;
     document.getElementById('edit-sector-select').value = ev.sector;

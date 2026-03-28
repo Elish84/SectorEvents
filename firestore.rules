@@ -16,20 +16,21 @@ service cloud.firestore {
     // ============ PROJECT: SECTOR EVENTS =================
     // =====================================================
     
-    // אירועים: כל משתמש מחובר יכול לדווח ולצפות. רק מנהל יכול לערוך או למחוק.
+    // אירועים: כל אדם יכול לדווח. משתמש מחובר יכול לקרוא. רק מנהל יכול לערוך או למחוק.
     match /sectorEvents/{docId} {
-      allow create, read: if signedIn();
+      allow create: if true;
+      allow read: if signedIn();
       allow update, delete: if isAdmin();
     }
 
-    // סוגי אירועים ותפקידים: כולם (מחוברים) קוראים, רק מנהל עורך
+    // סוגי אירועים ותפקידים: כולם כותבים ציבורית קוראים כדי למלא טפסים, רק מנהל עורך
     match /roles/{docId} {
-      allow read: if signedIn();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 
     match /eventTypes/{docId} {
-      allow read: if signedIn();
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
 

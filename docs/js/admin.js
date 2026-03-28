@@ -1,7 +1,12 @@
 import { addDocument, deleteDocument } from './api.js';
 import { showNotification } from './ui.js';
 
+let isAdminFormsConfigured = false;
+
 export function setupAdminForms() {
+    if (isAdminFormsConfigured) return;
+    isAdminFormsConfigured = true;
+    
     setupIconPicker();
     setupForm('add-event-type-form', 'eventTypes', () => {
         return {
@@ -89,7 +94,9 @@ function setupIconPicker() {
         'fire', 'shield-alt', 'medkit', 'car-crash', 'bomb',
         'user-injured', 'exclamation-triangle', 'biohazard', 
         'radiation', 'search', 'skull-crossbones', 'truck-medical', 
-        'gun', 'helicopter', 'eye', 'bolt', 'water', 'wind', 'map-pin'
+        'gun', 'helicopter', 'eye', 'bolt', 'water', 'wind', 'map-pin',
+        'cubes', 'wine-bottle', 'car', 'truck-pickup', 'road-barrier', 'fire-alt', 'bullseye',
+        'fan', 'person-circle-exclamation', 'person-walking', 'person-walking-dashed-line-arrow-right'
     ];
     
     availableIcons.forEach(icon => {

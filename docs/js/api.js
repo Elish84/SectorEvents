@@ -100,11 +100,32 @@ export async function createEvent(eventData) {
     }
 }
 
-export function subscribeToEvents(callback) {
+let isInitialEventsLoad = true;
+
+export function subscribeToEvents(callback, onNewEventCallback) {
     const q = query(collection(db, "sectorEvents"), orderBy("createdAt", "desc"));
     return onSnapshot(q, (snapshot) => {
         const items = [];
         snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+        
+        if (onNewEventCallback && !isInitialEventsLoad) {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const data = change.doc.data();
+                    if (data.createdAt) {
+                        const ageMs = Date.now() - data.createdAt.toMillis();
+                        if (ageMs < 60000) { // Only notify if it was created in the last 60 seconds
+                            onNewEventCallback({ id: change.doc.id, ...data });
+                        }
+                    } else {
+                        // Optimistic local write, timestamp is null initially
+                        onNewEventCallback({ id: change.doc.id, ...data });
+                    }
+                }
+            });
+        }
+        isInitialEventsLoad = false;
+        
         callback(items);
     }, (error) => {
         if (error.code === 'failed-precondition') {

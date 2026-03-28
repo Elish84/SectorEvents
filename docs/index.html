@@ -23,9 +23,10 @@
 <body>
 
     <!-- Auth Overlay -->
-    <div id="auth-container" class="overlay">
-        <div class="auth-box">
-            <h2><i class="fas fa-shield-alt"></i> התחברות למערכת</h2>
+    <div id="auth-container" class="overlay hidden">
+        <div class="auth-box" style="position: relative;">
+            <button id="btn-close-auth" style="position: absolute; top: 15px; left: 15px; background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"><i class="fas fa-times"></i></button>
+            <h2><i class="fas fa-shield-alt"></i> כניסת מורשים</h2>
             <form id="login-form">
                 <div class="form-group">
                     <label for="login-email">דוא"ל</label>
@@ -42,24 +43,26 @@
     </div>
 
     <!-- Main Content -->
-    <div id="app-container" class="hidden">
+    <div id="app-container">
         
         <header>
-            <div class="logo">
-                <i class="fas fa-satellite-dish"></i> מערכת ניהול אירועים
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="img/logo.png" alt="לוגו" style="height: 40px; border-radius: 4px;" onerror="this.style.display='none'">
+                <span>מערכת ניהול אירועים - צמ"מ 8109</span>
             </div>
             <div class="user-info">
-                <span id="user-greeting">שלום, משתמש</span>
-                <button id="logout-btn" class="btn small-btn outline-btn">התנתק</button>
+                <span id="user-greeting" class="auth-only hidden">שלום, אורח</span>
+                <button id="logout-btn" class="btn small-btn outline-btn auth-only hidden">התנתק</button>
+                <button id="login-open-btn" class="btn small-btn outline-btn public-only"><i class="fas fa-user-shield"></i> כניסה</button>
             </div>
         </header>
 
         <nav class="bottom-nav">
             <button class="nav-btn active" data-tab="form-tab"><i class="fas fa-pen"></i><span>דיווח</span></button>
-            <button class="nav-btn" data-tab="map-tab"><i class="fas fa-map-marked-alt"></i><span>מפה</span></button>
-            <button class="nav-btn" data-tab="dashboard-tab"><i class="fas fa-chart-bar"></i><span>דשבורד</span></button>
-            <button class="nav-btn" data-tab="records-tab"><i class="fas fa-list"></i><span>רשימות</span></button>
-            <button class="nav-btn hidden" data-tab="admin-tab" id="nav-admin"><i class="fas fa-cog"></i><span>ניהול</span></button>
+            <button class="nav-btn auth-only hidden" data-tab="map-tab"><i class="fas fa-map-marked-alt"></i><span>מפה</span></button>
+            <button class="nav-btn auth-only hidden" data-tab="dashboard-tab"><i class="fas fa-chart-bar"></i><span>דשבורד</span></button>
+            <button class="nav-btn auth-only hidden" data-tab="records-tab"><i class="fas fa-list"></i><span>רשימות</span></button>
+            <button class="nav-btn auth-only hidden" data-tab="admin-tab" id="nav-admin"><i class="fas fa-cog"></i><span>ניהול</span></button>
         </nav>
 
         <main>
@@ -87,6 +90,11 @@
                             <label>גזרה</label>
                             <select id="sector-select" required><option value="">טוען...</option></select>
                         </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>כוח / משימה (רשות)</label>
+                        <input type="text" id="mission-name" placeholder="הגדר בשפה חופשית...">
                     </div>
 
                     <div class="form-group">
@@ -260,6 +268,9 @@
                             <input type="text" id="search-events" placeholder="חפש אירוע...">
                         </div>
                     </div>
+                    <div style="margin-top: 15px; text-align: left;">
+                        <button class="btn outline-btn" id="btn-export-csv"><i class="fas fa-file-csv"></i> ייצוא ל-CSV</button>
+                    </div>
                 </div>
 
                 <div class="table-responsive tactical-card">
@@ -307,6 +318,11 @@
                                 <label>שם המדווח</label>
                                 <input type="text" id="edit-reporter-name" required>
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>כוח / משימה (רשות)</label>
+                            <input type="text" id="edit-mission-name">
                         </div>
 
                         <div class="form-group row responsive-row">
