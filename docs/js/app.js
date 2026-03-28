@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupHeatmapToggle();
         setupEventForm();
         setupMapInteractions();
+        setupDashboardInteractions();
         setupRecordsInteractions();
         bindDataSubscriptions();
     });
@@ -42,10 +43,21 @@ function bindDataSubscriptions() {
         // Populate records filter
         const filterSelect = document.getElementById('record-filter-sector');
         filterSelect.innerHTML = '<option value="all">הכל</option>';
+        
+        // Populate dashboard filter
+        const dashFilterSector = document.getElementById('dash-filter-sector');
+        if (dashFilterSector) dashFilterSector.innerHTML = '<option value="all">הכל</option>';
+
         items.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = s.name;
-            filterSelect.appendChild(opt);
+            const opt1 = document.createElement('option');
+            opt1.value = opt1.textContent = s.name;
+            filterSelect.appendChild(opt1);
+            
+            if (dashFilterSector) {
+                const opt2 = document.createElement('option');
+                opt2.value = opt2.textContent = s.name;
+                dashFilterSector.appendChild(opt2);
+            }
         });
 
         if (isAdminUser) renderAdminList('admin-sectors-list', items, 'sectors');
@@ -67,13 +79,23 @@ function bindDataSubscriptions() {
         renderDropdown('event-type-select', items, 'בחר סוג אירוע...');
         renderDropdown('edit-event-type-select', items, 'בחר סוג אירוע...');
         
-        // Map filter types
+        // Map filter types & Dashboard filter types
         const mapFilterType = document.getElementById('map-filter-type');
         mapFilterType.innerHTML = '<option value="all">הכל</option>';
+        
+        const dashFilterType = document.getElementById('dash-filter-type');
+        if (dashFilterType) dashFilterType.innerHTML = '<option value="all">הכל</option>';
+
         items.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = opt.textContent = t.name;
-            mapFilterType.appendChild(opt);
+            const opt1 = document.createElement('option');
+            opt1.value = opt1.textContent = t.name;
+            mapFilterType.appendChild(opt1);
+            
+            if (dashFilterType) {
+                const opt2 = document.createElement('option');
+                opt2.value = opt2.textContent = t.name;
+                dashFilterType.appendChild(opt2);
+            }
         });
 
         if (isAdminUser) renderAdminList('admin-event-types-list', items, 'eventTypes');
@@ -83,7 +105,7 @@ function bindDataSubscriptions() {
     subscribeToEvents((events) => {
         allEventsCache = events;
         renderEventsOnMap(events, true); // initial auto bounds
-        updateDashboard(events);
+        renderDashboardData();
         renderEventsTable();
     });
 }
@@ -206,6 +228,43 @@ function setupEventForm() {
     });
 }
 
+// --- Dashboard Interactions ---
+function setupDashboardInteractions() {
+    document.getElementById('dash-filter-type').addEventListener('change', renderDashboardData);
+    document.getElementById('dash-filter-sector').addEventListener('change', renderDashboardData);
+    document.getElementById('dash-filter-time').addEventListener('change', renderDashboardData);
+    
+    window.addEventListener('tabChanged', (e) => {
+        if(e.detail.tabId === 'dashboard-tab') {
+            setTimeout(renderDashboardData, 150);
+        }
+    });
+}
+
+function renderDashboardData() {
+    const typeFilter = document.getElementById('dash-filter-type').value;
+    const sectorFilter = document.getElementById('dash-filter-sector').value;
+    const timeFilter = document.getElementById('dash-filter-time').value;
+
+    let filteredEvents = allEventsCache;
+
+    if(typeFilter !== 'all') {
+        filteredEvents = filteredEvents.filter(ev => ev.eventType === typeFilter);
+    }
+    
+    if(sectorFilter !== 'all') {
+        filteredEvents = filteredEvents.filter(ev => ev.sector === sectorFilter);
+    }
+
+    if(timeFilter !== 'all') {
+        const hoursBack = parseInt(timeFilter);
+        const cutoff = new Date().getTime() - (hoursBack * 60 * 60 * 1000);
+        filteredEvents = filteredEvents.filter(ev => ev.eventTime >= cutoff);
+    }
+
+    updateDashboard(filteredEvents);
+}
+
 // --- Records Table & Filters ---
 function setupRecordsInteractions() {
     document.getElementById('search-events').addEventListener('input', renderEventsTable);
@@ -284,7 +343,7 @@ function renderEventsTable() {
             <td><i class="fas fa-${typeIcon}" style="color:${typeColor}; margin-left:5px;"></i> ${ev.eventType || '-'}</td>
             <td>${ev.sector || '-'}</td>
             <td>${ev.reporterName || '-'}</td>
-            <td>
+            <td class="action-btns">
                 <button class="btn secondary-btn small-btn view-btn" data-id="${ev.id}">פרטים</button>
                 ${isAdminUser ? `
                     <button class="btn outline-btn small-btn edit-btn" data-id="${ev.id}">ערוך</button>

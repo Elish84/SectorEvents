@@ -192,6 +192,33 @@
             <!-- Tab 3: Dashboard -->
             <section id="dashboard-tab" class="tab-content">
                 <h2>דשבורד אירועים</h2>
+                
+                <div class="tactical-card filters-card">
+                    <div class="form-group row responsive-row align-bottom">
+                        <div class="third">
+                            <label>סוג אירוע</label>
+                            <select id="dash-filter-type">
+                                <option value="all">הכל</option>
+                            </select>
+                        </div>
+                        <div class="third">
+                            <label>גזרה</label>
+                            <select id="dash-filter-sector">
+                                <option value="all">הכל</option>
+                            </select>
+                        </div>
+                        <div class="third">
+                            <label>טווח זמנים</label>
+                            <select id="dash-filter-time">
+                                <option value="all">הכל</option>
+                                <option value="24">24 שעות אחרונות</option>
+                                <option value="72">3 ימים אחרונים</option>
+                                <option value="168">שבוע אחרון</option>
+                                <option value="720">חודש אחרון</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
                 <div class="tactical-card chart-container">
                     <canvas id="sector-chart"></canvas>
                 </div>

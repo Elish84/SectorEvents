@@ -181,9 +181,30 @@ function applyMapFiltersAndRender(autoBounds = false) {
     });
 
     if(autoBounds && filteredEvents.length > 0) {
-        const bounds = markerClusterGroup.getBounds();
-        if(bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50] });
+        // Find hottest area (highest density of events nearby)
+        let bestPoint = null;
+        let maxCount = -1;
+        filteredEvents.forEach(e1 => {
+           if(!e1.location || !e1.location.lat || !e1.location.lng) return;
+           let count = 0;
+           filteredEvents.forEach(e2 => {
+              if(!e2.location || !e2.location.lat || !e2.location.lng) return;
+              // rough distance calculation (squared)
+              let dx = e1.location.lat - e2.location.lat;
+              let dy = e1.location.lng - e2.location.lng;
+              if (dx*dx + dy*dy < 0.05) count++; 
+           });
+           if (count > maxCount) { 
+               maxCount = count; 
+               bestPoint = e1.location; 
+           }
+        });
+
+        if (bestPoint) {
+            map.setView([bestPoint.lat, bestPoint.lng], 13);
+        } else {
+            const bounds = markerClusterGroup.getBounds();
+            if(bounds.isValid()) map.fitBounds(bounds, { padding: [50, 50] });
         }
     }
 
@@ -196,7 +217,7 @@ function applyMapFiltersAndRender(autoBounds = false) {
         
         // If heatmap was active, refresh it
         const btn = document.getElementById('toggle-heatmap');
-        if(btn.classList.contains('primary-btn')) {
+        if(btn.classList.contains('active-heat')) {
             map.addLayer(heatmapLayer);
             map.removeLayer(markerClusterGroup);
         }
@@ -207,13 +228,13 @@ export function setupHeatmapToggle() {
     const btn = document.getElementById('toggle-heatmap');
 
     btn.addEventListener('click', () => {
-        const isHeat = btn.classList.contains('primary-btn');
+        const isHeat = btn.classList.contains('active-heat');
         if(!isHeat) { // turning it on
-            btn.classList.replace('secondary-btn', 'primary-btn');
+            btn.classList.add('active-heat', 'primary-btn');
             map.removeLayer(markerClusterGroup);
             if(heatmapLayer) map.addLayer(heatmapLayer);
         } else { // turning it off
-            btn.classList.replace('primary-btn', 'secondary-btn');
+            btn.classList.remove('active-heat', 'primary-btn');
             if(heatmapLayer) map.removeLayer(heatmapLayer);
             map.addLayer(markerClusterGroup);
         }

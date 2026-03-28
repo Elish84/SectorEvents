@@ -247,6 +247,14 @@ th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
 th { background-color: rgba(255,255,255,0.05); color: var(--text-muted); font-weight: normal; }
 tr:hover { background-color: rgba(255,255,255,0.02); }
 
+.action-btns {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
 /* Admin */
 .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
 .admin-list { list-style: none; margin-top: 15px; max-height: 200px; overflow-y: auto; }
@@ -294,28 +302,44 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 
 /* Responsive Adjustments */
 @media (min-width: 768px) {
-    body { flex-direction: row; }
+    body { flex-direction: row; font-size: 1.1rem; }
     
-    header { position: absolute; top: 0; right: 80px; left: 0; }
+    header { position: absolute; top: 0; right: 100px; left: 0; padding: 20px 30px; }
     
     /* Sidebar instead of bottom nav for desktop */
     .bottom-nav {
         left: auto;
         right: 0;
         top: 0;
-        width: 80px;
+        width: 100px;
         height: 100vh;
         flex-direction: column;
         justify-content: flex-start;
-        padding-top: 20px;
+        padding-top: 30px;
         border-top: none;
         border-left: 1px solid var(--border);
     }
-    .nav-btn { padding: 20px 0; }
+    .nav-btn { padding: 20px 0; font-size: 0.95rem; gap: 8px; }
+    .nav-btn i { font-size: 1.6rem; }
     
-    main { padding-top: 80px; margin-right: 80px; padding-bottom: 20px; }
+    main { 
+        padding-top: 100px; 
+        margin-right: 100px; 
+        padding-bottom: 40px; 
+        max-width: 1400px;
+        margin-left: auto; 
+    }
     
-    .fab { right: 100px; bottom: 30px; }
+    .fab { right: 120px; bottom: 40px; width: 70px; height: 70px; font-size: 30px; }
+
+    input[type="text"], input[type="email"], input[type="password"], input[type="datetime-local"], select, textarea {
+        padding: 12px;
+        font-size: 1.1rem;
+    }
+    .btn { font-size: 1.1rem; padding: 12px 20px; }
+    
+    .tactical-card { padding: 30px; }
+    .chart-container { height: 450px; }
 }
 
 /* Custom leaflet popups matching dark theme */
