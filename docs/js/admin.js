@@ -2,6 +2,7 @@ import { addDocument, deleteDocument } from './api.js';
 import { showNotification } from './ui.js';
 
 export function setupAdminForms() {
+    setupIconPicker();
     setupForm('add-event-type-form', 'eventTypes', () => {
         return {
             name: document.getElementById('new-event-type-name').value,
@@ -76,5 +77,31 @@ export function renderAdminList(listId, items, collectionName) {
                 }
             }
         });
+    });
+}
+
+function setupIconPicker() {
+    const grid = document.getElementById('icon-grid');
+    if (!grid) return;
+    const hiddenInput = document.getElementById('new-event-type-icon');
+    
+    const availableIcons = [
+        'fire', 'shield-alt', 'medkit', 'car-crash', 'bomb',
+        'user-injured', 'exclamation-triangle', 'biohazard', 
+        'radiation', 'search', 'skull-crossbones', 'truck-medical', 
+        'gun', 'helicopter', 'eye', 'bolt', 'water', 'wind', 'map-pin'
+    ];
+    
+    availableIcons.forEach(icon => {
+        const div = document.createElement('div');
+        div.className = 'icon-option';
+        if(icon === 'fire') div.classList.add('selected');
+        div.innerHTML = `<i class="fas fa-${icon}"></i>`;
+        div.addEventListener('click', () => {
+            document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            hiddenInput.value = icon;
+        });
+        grid.appendChild(div);
     });
 }

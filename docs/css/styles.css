@@ -257,6 +257,12 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 
 /* Admin */
 .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.icon-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; max-height: 150px; overflow-y: auto; padding-right: 5px; }
+.icon-option { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 1.2rem; transition: background 0.2s; color: var(--text-main); }
+.icon-option:hover { background: rgba(255,255,255,0.1); }
+.icon-option.selected { background: var(--primary); border-color: var(--primary); color: white; }
+.icon-picker-label { margin-top: 10px; margin-bottom: 5px; display: block; }
+.add-type-btn { margin-top: 10px; }
 .admin-list { list-style: none; margin-top: 15px; max-height: 200px; overflow-y: auto; }
 .admin-list li {
     display: flex;
@@ -326,8 +332,7 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
         padding-top: 100px; 
         margin-right: 100px; 
         padding-bottom: 40px; 
-        max-width: 1400px;
-        margin-left: auto; 
+        width: 100%;
     }
     
     .fab { right: 120px; bottom: 40px; width: 70px; height: 70px; font-size: 30px; }

@@ -336,8 +336,10 @@
                         <form id="add-event-type-form">
                             <input type="text" id="new-event-type-name" placeholder="שם סוג אירוע" required>
                             <input type="color" id="new-event-type-color" value="#ff0000">
-                            <input type="text" id="new-event-type-icon" placeholder="שם אייקון (למשל fire)" required>
-                            <button type="submit" class="btn small-btn primary-btn">הוסף</button>
+                            <input type="hidden" id="new-event-type-icon" value="fire" required>
+                            <label class="icon-picker-label">בחר אייקון:</label>
+                            <div id="icon-grid" class="icon-grid"></div>
+                            <button type="submit" class="btn small-btn primary-btn add-type-btn">הוסף</button>
                         </form>
                         <ul id="admin-event-types-list" class="admin-list"></ul>
                     </div>
