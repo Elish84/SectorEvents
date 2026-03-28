@@ -225,7 +225,7 @@ main {
 .fab:hover { transform: scale(1.1); }
 
 /* Dashboard */
-.chart-container { position: relative; height: 300px; width: 100%; }
+.chart-container { position: relative; height: 300px; width: 100%; max-width: 100%; overflow: hidden; }
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
 .stat-card {
     background: var(--bg-card);
@@ -308,9 +308,15 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
 
 /* Responsive Adjustments */
 @media (min-width: 768px) {
-    body { flex-direction: row; font-size: 1.1rem; }
+    body { display: block; font-size: 1.1rem; }
     
-    header { position: absolute; top: 0; right: 100px; left: 0; padding: 20px 30px; }
+    #app-container {
+        display: block;
+        width: 100%;
+        min-height: 100vh;
+    }
+    
+    header { position: fixed; top: 0; right: 100px; left: 0; padding: 20px 30px; height: 80px; z-index: 10; }
     
     /* Sidebar instead of bottom nav for desktop */
     .bottom-nav {
@@ -332,7 +338,7 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
         padding-top: 100px; 
         margin-right: 100px; 
         padding-bottom: 40px; 
-        width: 100%;
+        width: calc(100% - 100px);
     }
     
     .fab { right: 120px; bottom: 40px; width: 70px; height: 70px; font-size: 30px; }
@@ -345,6 +351,8 @@ tr:hover { background-color: rgba(255,255,255,0.02); }
     
     .tactical-card { padding: 30px; }
     .chart-container { height: 450px; }
+    
+    .admin-list { max-height: calc(100vh - 350px); }
 }
 
 /* Custom leaflet popups matching dark theme */
